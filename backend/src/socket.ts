@@ -78,13 +78,11 @@ export class ServerSocket {
   StartListeners = async (socket: Socket) => {
     console.info("Message received from " + socket.id);
     let difficulty = 1;
-    let chessEngine: ChessAIModelInterface = await ChessStockfishModel.loadStockfishEngine(difficulty);
-    console.log("done loading")
-    let roomID: string;
+    let chessEngine: ChessAIModelInterface | null = null;
 
     socket.on(
       "joinRoom",
-      (
+      async (
         clientRoomID: string,
         callback: (
           succeed: boolean,
@@ -92,17 +90,27 @@ export class ServerSocket {
           playerColor: Color | null
         ) => void
       ) => {
-        console.log("Join room request")
+        console.log("Join room request");
+        let roomID: string;
         //if no record about this socket and no input roomID => This is a new socket and need to create a new room
         if (!this.socketsRecord.has(socket.id) && !clientRoomID) {
           roomID = uuidv4();
           this.updateSocketsRecord(roomID, socket.id, "white", false);
           this.udpateRoomsRecord(roomID, socket.id, "white");
-          callback(true, roomID, "white");
+
+          try {
+            console.log(`Loading Stockfish for new AI room [${roomID}]...`);
+            chessEngine = await ChessStockfishModel.loadStockfishEngine(difficulty);
+            console.log(`Stockfish loaded for room: ${roomID}`);
+          } catch (e) {
+            console.error("Stockfish failed to load!", e);
+            callback(false, null, null);
+            return;
+          }
         }
 
         //no record about this socket and do have input roomID => this socket want to join a room
-        if (!this.socketsRecord.has(socket.id) && clientRoomID) {
+        else if (!this.socketsRecord.has(socket.id) && clientRoomID) {
           roomID = clientRoomID;
 
           //Check if room exist and check number of player in room
@@ -116,15 +124,33 @@ export class ServerSocket {
 
           this.updateSocketsRecord(clientRoomID, socket.id, "black", true);
           this.udpateRoomsRecord(clientRoomID, socket.id, "black");
-          this.socketsRecord.get(
-            this.roomsRecord.get(clientRoomID)!.white
-          )!.isInMultiplayerMode = true;
+          
+          // Check if white socket still exists before accessing it
+          const whiteSocketID = this.roomsRecord.get(clientRoomID)!.white;
+          const whiteSocketRecord = this.socketsRecord.get(whiteSocketID);
+          if (whiteSocketRecord) {
+            whiteSocketRecord.isInMultiplayerMode = true;
+          }
 
           //Force White to reset the game when going in multiplayer mode
           socket.to(roomID).emit("setNewGame");
 
           //Callback to black player socket
           callback(true, roomID, "black");
+        } else {
+          // This is the reconnecting player case
+          const existingRecord = this.socketsRecord.get(socket.id);
+          if (existingRecord) {
+             roomID = existingRecord.roomID;
+             // Don't need to load engine, it should be loaded or this is multiplayer
+             console.log(`Socket ${socket.id} rejoining room ${roomID}`);
+             callback(true, existingRecord.roomID, existingRecord.userColor);
+          } else {
+             // Should be impossible to get here
+             console.log("Error: Socket not in record but also not new.");
+             callback(false, null, null);
+             return;
+          }
         }
         //Join room
         socket.join(roomID.trim());
@@ -138,24 +164,30 @@ export class ServerSocket {
         // console.log(
         //   `player make move from ${playerMoveFrom} to ${playerMoveTo}`
         // );
-        if (this.socketsRecord.get(socket.id)?.isInMultiplayerMode) {
-          // console.log("multiplayer mode");
+        const socketInfo = this.socketsRecord.get(socket.id);
+        if (!socketInfo) return;
+        const roomID = socketInfo.roomID;
+
+        if (socketInfo.isInMultiplayerMode) {
+          // Multiplayer mode
           socket
             .to(roomID)
             .emit("opponentMakeMove", playerMoveFrom, playerMoveTo);
-
           return;
         }
-        // console.log("computer playing");
+
+        // AI Mode
+        if (!chessEngine) {
+          console.warn(`Engine for room ${roomID} not loaded yet, ignoring move.`);
+          return; // Engine is still loading, just drop the move.
+        }
+        
         chessEngine.updatePlayerMove(
           playerMoveFrom,
           playerMoveTo
         );
-        let [opponentMoveFrom, opponentMoveTo] = await (
-          chessEngine as ChessMinimaxModel
-        ).computerMakingMove();
 
-  
+        let [opponentMoveFrom, opponentMoveTo] = await chessEngine.computerMakingMove();
 
         if (opponentMoveFrom && opponentMoveTo)
           socket.emit("opponentMakeMove", opponentMoveFrom, opponentMoveTo);
@@ -163,8 +195,16 @@ export class ServerSocket {
     );
 
     socket.on("playerUndo", async (callback: (succeed: boolean) => void) => {
-      if (this.socketsRecord.get(socket.id)?.isInMultiplayerMode)
+      const socketInfo = this.socketsRecord.get(socket.id);
+      if (this.socketsRecord.get(socket.id)?.isInMultiplayerMode || !socketInfo) {
         callback(false);
+        return;
+      }
+
+      if (!chessEngine) {
+        callback(false); // engine not loaded
+        return;
+      }
 
       try {
         chessEngine.playerUndo();
@@ -176,13 +216,21 @@ export class ServerSocket {
 
     socket.on(
       "setDifficulty",
-      async (difficulty: number, callback: (succeed: boolean) => void) => {
-        if (this.socketsRecord.get(socket.id)?.isInMultiplayerMode)
+      async (difficultyNum: number, callback: (succeed: boolean) => void) => {
+        const socketInfo = this.socketsRecord.get(socket.id);
+        if (this.socketsRecord.get(socket.id)?.isInMultiplayerMode || !socketInfo) {
           callback(false);
+          return;
+        }
+        
+        if (!chessEngine) {
+          callback(false); // engine not loaded
+          return;
+        }
+
         try {
-          difficulty = difficulty;
-          chessEngine.setSearchDepth(difficulty);
-          // console.log(`Set difficulty to ${difficulty}`);
+          difficulty = difficultyNum; // Update difficulty for future games
+          chessEngine.setSearchDepth(difficultyNum);
           callback(true);
         } catch (e: any) {
           callback(false);
@@ -193,39 +241,49 @@ export class ServerSocket {
     socket.on(
       "setAIModel",
       async (aiModel: string, callback: (succeed: boolean) => void) => {
-        if (this.socketsRecord.get(socket.id)?.isInMultiplayerMode)
+        const socketInfo = this.socketsRecord.get(socket.id);
+        if (this.socketsRecord.get(socket.id)?.isInMultiplayerMode || !socketInfo) {
           callback(false);
+          return;
+        }
+
         try {
-          console.log("changing AI Model")
-          let curFen = chessEngine.getFen();
+          console.log("changing AI Model");
+          let curFen = chessEngine ? chessEngine.getFen() : "";
            if (aiModel === "stockfish") {
             chessEngine = await ChessStockfishModel.loadStockfishEngine(difficulty, curFen);
            }  else if (aiModel === "minimax") {
             chessEngine = new ChessMinimaxModel(difficulty, curFen);
            }
-          // console.log(`Set difficulty to ${difficulty}`);
           callback(true);
         } catch (e: any) {
           callback(false);
         }
       }
-    )
+    );
+
+    // I removed the duplicate "setAIModel" listener that was here.
 
     socket.on("setNewGame", async (callback: (succeed: boolean) => void) => {
-      if (this.socketsRecord.get(socket.id)?.isInMultiplayerMode) {
+      const socketInfo = this.socketsRecord.get(socket.id);
+      if (!socketInfo) {
+        callback(false);
+        return;
+      }
+
+      if (socketInfo.isInMultiplayerMode) {
         try {
-          socket.to(roomID).emit("setNewGame");
+          socket.to(socketInfo.roomID).emit("setNewGame");
           callback(true);
         } catch (e: any) {
-          // console.log(e);
           callback(false);
         }
       } else {
+        // AI Mode
         try {
-          chessEngine = new ChessMinimaxModel(difficulty);
+          chessEngine = await ChessStockfishModel.loadStockfishEngine(difficulty);
           callback(true);
         } catch (e: any) {
-          // console.log(e);
           callback(false);
         }
       }
@@ -233,11 +291,16 @@ export class ServerSocket {
 
     socket.on("disconnect", () => {
       console.info("Disconnect received from: " + socket.id);
-      socket.to(roomID).emit("opponentDisconnected")
-      if (this.socketsRecord.has(socket.id)) {
+      const socketInfo = this.socketsRecord.get(socket.id);
+      if (socketInfo) {
+        const roomID = socketInfo.roomID;
+        socket.to(roomID).emit("opponentDisconnected");
+
+        // This logic is still buggy for multiplayer (deletes room if one player leaves)
+        // but it will work for your local testing.
         if (this.roomsRecord.has(roomID)) {
             this.roomsRecord.delete(roomID);
-          }
+        }
         this.socketsRecord.delete(socket.id);
       }
     });

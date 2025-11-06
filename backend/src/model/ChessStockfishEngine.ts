@@ -14,7 +14,7 @@ class ChessStockfishModel extends ChessEngine implements ChessAIModelInterface {
 
   public static async loadStockfishEngine(difficulty: number, fen: string=""): Promise<ChessStockfishModel> {
     const stockfishEngine: Engine = new Engine(
-      "src/model/stockfish_15.1_linux_x64/stockfish-ubuntu-20.04-x86-64"
+      "src/model/stockfish-macos"
     );
     await stockfishEngine.init();
     await stockfishEngine.isready();

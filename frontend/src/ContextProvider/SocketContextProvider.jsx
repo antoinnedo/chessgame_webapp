@@ -45,7 +45,7 @@ const SocketContextProvider = (props) => {
         const timeout = setTimeout(() => {
           // Handle timeout
           resolve(false); // Resolve the promise with false indicating failure
-        }, 300); // Timeout duration in milliseconds (e.g., 5000ms = 5 seconds)
+        }, 3000); // Timeout duration in milliseconds (e.g., 5000ms = 5 seconds)
     
         socket.emit("joinRoom", roomID, async (succeed, roomID, playerColorReturn) => {
           clearTimeout(timeout); // Clear the timeout since the callback was executed

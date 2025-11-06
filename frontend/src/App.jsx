@@ -6,6 +6,7 @@ import GameContainer from "./components/GameContainer";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { MDBFooter } from "mdb-react-ui-kit";
 import { VscGithub } from "react-icons/vsc";
+import { AccessibilityContextProvider } from "./ContextProvider/AccessibilityContext";
 
 function App() {
   return (
@@ -19,16 +20,18 @@ function App() {
                 element={
                   <SocketContextProvider>
                     <ChessContextProvider>
-                      <div className="app container-fluid">
-                        <div className="row">
-                          <div className="col-lg-8 col-md-12 col-sm-12">
-                            <GameContainer />
-                          </div>
-                          <div className="col-lg-4 col-md-10 col-sm-12">
-                            <ControlBox />
+                      <AccessibilityContextProvider>
+                        <div className="app container-fluid">
+                          <div className="row">
+                            <div className="col-lg-8 col-md-12 col-sm-12">
+                              <GameContainer />
+                            </div>
+                            <div className="col-lg-4 col-md-10 col-sm-12">
+                              <ControlBox />
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      </AccessibilityContextProvider>
                     </ChessContextProvider>
                   </SocketContextProvider>
                 }
@@ -45,6 +48,7 @@ function App() {
         >
           &copy; 2023 Copyright:{""}
           <h6>Steve Do, Duong Vo</h6>
+          <h7>Accessibility added by Anthony</h7>
           <h7>Find our code on Github! </h7>
           <a
             href="https://github.com/dominhnhut01/chessgame_webapp"

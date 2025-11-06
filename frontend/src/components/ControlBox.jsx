@@ -7,6 +7,7 @@ import { Tooltip } from "react-tooltip";
 import "./ControlBox.css";
 import { ChessContext } from "../ContextProvider/ChessContextProvider";
 import { SocketContext } from "../ContextProvider/SocketContextProvider";
+import { AccessibilityContext } from "../ContextProvider/AccessibilityContext";
 
 function HistoryBox() {
   const { moveHistory } = useContext(ChessContext);
@@ -40,6 +41,7 @@ function HistoryBox() {
 
 function RoomLinkBox() {
   const { roomLink } = useContext(SocketContext);
+  const [copyStatus, setCopyStatus] = useState("");
 
   return (
     <div className="room-link-box-wrapper shadow-box">
@@ -51,22 +53,30 @@ function RoomLinkBox() {
           className="shadow-box"
           value={roomLink}
           readOnly
+          aria-describedby="copyStatusMessage"
         />
-        <div
+        <button
+          type="button"
           className="copy-icon-wrapper button shadow-box"
-          onClick={() => navigator.clipboard.writeText(roomLink)}
+          onClick={() => {
+            navigator.clipboard.writeText(roomLink);
+            setCopyStatus("Room link copied to clipboard.");
+            setTimeout(() => setCopyStatus(""), 2500);
+          }}
           data-tooltip-id="copy-tooltip"
           data-tooltip-content="Copy room link"
         >
-          <FiClipboard
-            className="copy-icon"
-            type="button"
-            onClick={() => navigator.clipboard.writeText(roomLink)}
-            data-tooltip-id="copy-tooltip"
-            data-tooltip-content="Copy room link"
-          />
+          <FiClipboard className="copy-icon" aria-hidden="true" />
+          <span className="sr-only">Copy room link</span>
           <Tooltip id="copy-tooltip" />
-        </div>
+        </button>
+      </div>
+      <div
+        id="copyStatusMessage"
+        className="sr-only"
+        aria-live="polite"
+      >
+        {copyStatus}
       </div>
     </div>
   );
@@ -77,6 +87,7 @@ export default function ControlBox() {
     useContext(SocketContext);
   const { playerUndo, checkTurn, setNewGame, gameStatus } =
     useContext(ChessContext);
+  const { isAccessibleMode, setAccessibleMode } = useContext(AccessibilityContext);
 
   //Message Box
   const [message, setMessage] = useState("");
@@ -152,19 +163,18 @@ export default function ControlBox() {
       <div className="control-box shadow-box">
         <div className="difficulty-select container-fluid">
           <div className="row gy-3">
-          <div className="col-sm-5 col-md-5 col-lg-5" id="heading">
+            <div className="col-sm-5 col-md-5 col-lg-5" id="heading">
               AI Model
             </div>
             <div className="col-sm-7 col-md-7 col-lg-7">
               <select
                 className="form-select"
-                aria-label="aiModel-select"
+                aria-label="Select AI model"
                 onChange={aiModelSelect}
+                defaultValue="stockfish"
               >
                 <option value="minimax">Minimax Model (Easy Mode)</option>
-                <option selected value="stockfish">
-                  Stockfish Model (Expert Mode)
-                </option>
+                <option value="stockfish">Stockfish Model (Expert Mode)</option>
               </select>
             </div>
 
@@ -174,51 +184,77 @@ export default function ControlBox() {
             <div className="col-sm-7 col-md-7 col-lg-7">
               <select
                 className="form-select"
-                aria-label="difficulty-select"
+                aria-label="Select difficulty"
                 onChange={difficultySelect}
+                defaultValue="1"
               >
                 <option value="0">Easy</option>
-                <option selected value="1">
-                  Medium
-                </option>
+                <option value="1">Medium</option>
               </select>
             </div>
           </div>
+        </div>
+        <div className="accessible-mode-toggle">
+          <label htmlFor="accessibleModeSwitch" className="toggle-label">
+            <input
+              id="accessibleModeSwitch"
+              type="checkbox"
+              checked={isAccessibleMode}
+              onChange={(event) => setAccessibleMode(event.target.checked)}
+            />
+            <span>Accessible mode</span>
+          </label>
+          <p className="toggle-help">
+            {isAccessibleMode
+              ? "Accessible mode is on. Screen readers and keyboard controls are optimized."
+              : "Turn on accessible mode for enhanced screen reader and keyboard support."}
+          </p>
         </div>
         <h6 id="move-history-heading">Move History</h6>
         <div className="history-box shadow-box">
           <HistoryBox />
         </div>
         <div className="button-box">
-          <BiUndo
+          <button
             type="button"
-            size="3.5vh"
-            border="circle"
             className="button circle-frame"
             onClick={onClickUndoButton}
-            data-tooltip-id="bottom-tooltip" data-tooltip-content="Undo"
->
-            Undo
-          </BiUndo>
-          <BiRefresh
+            data-tooltip-id="bottom-tooltip"
+            data-tooltip-content="Undo"
+            aria-label="Undo last move"
+          >
+            <BiUndo size="3.5vh" aria-hidden="true" />
+          </button>
+          <button
             type="button"
-            size="3.5vh"
-            border="circle"
             className="button circle-frame"
             onClick={onClickNewGameButton}
-            data-tooltip-id="bottom-tooltip" data-tooltip-content="New Game"
-          />
+            data-tooltip-id="bottom-tooltip"
+            data-tooltip-content="New Game"
+            aria-label="Start a new game"
+          >
+            <BiRefresh size="3.5vh" aria-hidden="true" />
+          </button>
         </div>
       </div>
       <Tooltip id="bottom-tooltip" place="bottom"/>
       <RoomLinkBox />
       {visibleMessageBox ? (
         messageType === "normal" ? (
-          <div className="message-box shadow-box white-background">
+          <div
+            className="message-box shadow-box white-background"
+            role="status"
+            aria-live="polite"
+          >
             {message}
           </div>
         ) : (
-          <div className="message-box shadow-box red-background">{message}</div>
+          <div
+            className="message-box shadow-box red-background"
+            role="alert"
+          >
+            {message}
+          </div>
         )
       ) : (
         <div className="message-box hidden">{message}</div>

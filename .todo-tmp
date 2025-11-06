@@ -1,0 +1,13 @@
+TODO:
+ 
+
+DONE:
+
+2. Enhance board markup with semantic roles, aria-labels, and focus management for screen readers.
+3. Implement full keyboard move navigation and interactions (Tab/Arrow, Enter) with announcements.
+4. Add aria-live regions and audio/text feedback for game events across UI components.
+5. Ensure supporting components (controls, capture boxes) are accessible and integrate new focus order.
+
+
+1. Review existing frontend components to understand state management and rendering of the chessboard.
+6. Validate updates using linting/thinking pass; outline manual testing steps for screen readers and keyboard.

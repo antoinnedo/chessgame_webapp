@@ -14,7 +14,7 @@ export default function GameContainer(props) {
 
   if (!isConnected) {
     return (
-      <div className="loading-container">
+      <div className="loading-container" role="status" aria-live="polite">
         <MDBSpinner className="mx-auto" color="secondary">
           <span className="visually-hidden">Loading...</span>
         </MDBSpinner>
@@ -23,7 +23,11 @@ export default function GameContainer(props) {
   }
   if (playerColor === "black") {
     return (
-      <div className="game-container">
+      <div
+        className="game-container"
+        role="main"
+        aria-label="Chess game area"
+      >
         <ChessCaptureBox
           color={"black"}
           capturedPieces={capturedPieces["black"]}
@@ -42,7 +46,11 @@ export default function GameContainer(props) {
   }
 
   return (
-    <div className="game-container">
+    <div
+      className="game-container"
+      role="main"
+      aria-label="Chess game area"
+    >
       <ChessCaptureBox
         color={"white"}
         capturedPieces={capturedPieces["white"]}

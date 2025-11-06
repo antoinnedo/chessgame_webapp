@@ -5,7 +5,7 @@ import { ChessContext } from "../ContextProvider/ChessContextProvider";
 
 export default function ChessCaptureBox(props) {
   const { avatars } = useContext(SocketContext);
-  const {checkTurn} = useContext(ChessContext)
+  const { checkTurn } = useContext(ChessContext);
 
   const chessSymbols = new Map([
     [
@@ -32,24 +32,50 @@ export default function ChessCaptureBox(props) {
     ],
   ]);
 
-  let pieces = props.capturedPieces.map((pieceSymbol) => {
-    return chessSymbols.get(props.color).get(pieceSymbol);
-  });
+  const pieces = props.capturedPieces.map((pieceSymbol, index) => ({
+    id: `${props.color}-${pieceSymbol}-${index}`,
+    symbol: chessSymbols.get(props.color).get(pieceSymbol),
+    name: pieceSymbol,
+  }));
+
+  const isActive =
+    (props.color === "white" && checkTurn() === "b") ||
+    (props.color === "black" && checkTurn() === "w");
+
   return (
-    <div className="chess-capture-box">
+    <section
+      className="chess-capture-box"
+      aria-labelledby={`${props.color}-capture-heading`}
+    >
       <div className="chess-capture-box-headline">
-        {props.headline}
-        <div className={`avatar-wrapper shadow-box ${(props.color === 'white' &&checkTurn() === 'b') || (props.color === 'black' &&checkTurn() === 'w')? "pulse" : ""}`}>
-          <img src={avatars[props.color]} className="avatar" />
+        <h2 id={`${props.color}-capture-heading`} className="capture-heading">
+          {props.headline}
+        </h2>
+        <div
+          className={`avatar-wrapper shadow-box ${isActive ? "pulse" : ""}`}
+          aria-live="polite"
+        >
+          <img
+            src={avatars[props.color]}
+            className="avatar"
+            alt={`${props.headline} player avatar`}
+          />
         </div>
       </div>
       <div className="capturedPieces shadow-box">
-        {pieces.map((piece, idx) => (
-          <div className="capturedPiece" key={idx}>
-            {piece}
-          </div>
-        ))}
+        {pieces.length > 0 ? (
+          <ul className="captured-list" aria-live="polite">
+            {pieces.map((piece) => (
+              <li className="capturedPiece" key={piece.id}>
+                <span aria-hidden="true">{piece.symbol}</span>
+                <span className="sr-only">Captured {piece.name}</span>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="empty-captures">No captured pieces</p>
+        )}
       </div>
-    </div>
+    </section>
   );
 }
