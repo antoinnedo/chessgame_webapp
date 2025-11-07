@@ -62,7 +62,7 @@ export default function ChessCaptureBox(props) {
           />
         </div>
       </div>
-      <div className="capturedPieces shadow-box">
+      <div className="capturedPieces shadow-box island">
         {pieces.length > 0 ? (
           <ul className="captured-list" aria-live="polite">
             {pieces.map((piece) => (

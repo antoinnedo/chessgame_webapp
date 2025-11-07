@@ -74,3 +74,65 @@
   white-space: nowrap;
   border: 0;
 }
+
+.board-stack-container {
+  position: relative;
+  /* This ensures the container sizes to the chessboard */
+  line-height: 0;
+}
+
+/* 2. Style the overlay to be on top and full-size */
+.accessible-board.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  
+  /* Make the grid itself transparent */
+  background-color: transparent;
+  border: none;
+  
+  /* Make the grid rows and cells match the visual board */
+  gap: 0;
+  padding: 0; /* Override any padding */
+}
+
+.accessible-board.overlay .accessible-board-row {
+  gap: 0;
+}
+
+/* 3. Make the buttons invisible but functional */
+.accessible-board.overlay .accessible-square {
+  background-color: transparent;
+  border: none;
+  border-radius: 0;
+  color: transparent; /* Hides any text/symbols */
+  opacity: 0; /* Make it invisible */
+  padding: 0; /* Override any padding */
+  
+  /* This ensures the span doesn't add size */
+  line-height: 0;
+  font-size: 0;
+}
+
+/* 4. CRITICAL: Show focus outline when tabbing */
+.accessible-board.overlay .accessible-square:focus-visible {
+  opacity: 1; /* Show the focus state */
+  outline: 3px solid #2563eb; /* Blue focus ring */
+  outline-offset: -3px; /* Draw outline inside the square */
+  background-color: rgba(37, 99, 235, 0.2); /* Light blue feedback */
+}
+
+/* 5. Show selection and highlights visually */
+.accessible-board.overlay .accessible-square[data-selected="true"] {
+  background-color: rgba(255, 255, 0, 0.4); /* Yellow tint, matches visual board */
+  opacity: 1;
+}
+
+.accessible-board.overlay .accessible-square[data-highlighted="true"] {
+  /* This mimics the radial gradient for move options */
+  background: radial-gradient(circle, rgba(0,0,0,.1) 25%, transparent 25%);
+  opacity: 1;
+}

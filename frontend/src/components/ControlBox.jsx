@@ -92,7 +92,7 @@ export default function ControlBox() {
   //Message Box
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("normal");
-  const [visibleMessageBox, setVisibleMessageBox] = useState(false);
+  const [visibleMessageBox, setVisibleMessageBox] = useState(true);
 
   function aiModelSelect(evt) {
     setAIModelEmit(evt.target.value, (succeed) => {
@@ -211,7 +211,7 @@ export default function ControlBox() {
           </p>
         </div>
         <h6 id="move-history-heading">Move History</h6>
-        <div className="history-box shadow-box">
+        <div className="history-box shadow-box island">
           <HistoryBox />
         </div>
         <div className="button-box">

@@ -118,7 +118,7 @@ class ChessMinimaxModel extends ChessEngine implements ChessAIModelInterface{
   private openingMoves: MoveSAN[] = [];
   private endOpeningMoves: boolean = false;
 
-  constructor(
+  private constructor(
     difficultyLevel: number,
     fen: string = "",
     // openingStrategy: string = "italian_game"
@@ -136,6 +136,13 @@ class ChessMinimaxModel extends ChessEngine implements ChessAIModelInterface{
     //   if (this.openingMovesMap.has(openingStrategy))
     //     this.openingMoves = this.openingMovesMap.get(openingStrategy)!;
     // }
+  }
+
+  public static async create(difficulty: number, fen: string=""): Promise<ChessMinimaxModel> {
+    // It doesn't do any real async work,
+    // but wrapping it in a Promise makes it 'awaitable'
+    // and matches the creation pattern of the Stockfish model.
+    return Promise.resolve(new ChessMinimaxModel(difficulty, fen));
   }
 
   private switchSide(rank: Rank, file: File): [Rank, File] {

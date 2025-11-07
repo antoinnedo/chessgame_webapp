@@ -253,7 +253,7 @@ export class ServerSocket {
            if (aiModel === "stockfish") {
             chessEngine = await ChessStockfishModel.loadStockfishEngine(difficulty, curFen);
            }  else if (aiModel === "minimax") {
-            chessEngine = new ChessMinimaxModel(difficulty, curFen);
+            chessEngine = await ChessMinimaxModel.create(difficulty, curFen);
            }
           callback(true);
         } catch (e: any) {
@@ -261,8 +261,6 @@ export class ServerSocket {
         }
       }
     );
-
-    // I removed the duplicate "setAIModel" listener that was here.
 
     socket.on("setNewGame", async (callback: (succeed: boolean) => void) => {
       const socketInfo = this.socketsRecord.get(socket.id);

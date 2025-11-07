@@ -62,20 +62,20 @@
 }
 
 .avatar {
-  height: 10vmin;
+  align-items: center;
+  height: 6vmin;
   position: relative;
-  left: -65%;
-  top: -20%;
   /* margin-left: -5px; */
   /* border-radius: 50%; */
 }
 
 .avatar-wrapper {
-    position: relative;
-    width: 6vmin;
-    height: 6vmin;
-    overflow: hidden;
-    border-radius: 50%;
+  background-color: var(--option-white);
+  position: relative;
+  width: 6vmin;
+  height: 6vmin;
+  overflow: hidden;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;

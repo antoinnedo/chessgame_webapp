@@ -438,21 +438,46 @@ function ChessBoard() {
       >
         {liveAnnouncement}
       </div>
+
       {isAccessibleMode && (
-        <section
-          className="accessible-board-container"
-          aria-label="Accessible chessboard controls"
-        >
-          <p className="accessible-board-instructions">
-            Use Tab to leave the board. Use arrow keys to explore squares and press Enter or Space
-            to pick up or drop a piece.
-          </p>
+        <p className="accessible-board-instructions">
+          Use Tab to leave the board. Use arrow keys to explore squares and
+          press Enter or Space to pick up or drop a piece.
+        </p>
+      )}
+
+      <div className="board-stack-container">
+        
+        <Chessboard
+          id="ClickToMove"
+          boardOrientation={playerColor}
+          animationDuration={600}
+          arePiecesDraggable={false}
+          position={game.fen()}
+          onSquareClick={onSquareClick}
+          onSquareRightClick={onSquareRightClick}
+          customBoardStyle={{
+            borderRadius: "4px",
+            boxShadow: "0 2px 10px rgba(0, 0, 0, 0.5)",
+            // Disable mouse clicks when the overlay is active
+            pointerEvents: isAccessibleMode ? "none" : "auto",
+          }}
+          customSquareStyles={{
+            ...optionSquares,
+            ...rightClickedSquares,
+          }}
+          className="chessboard"
+          aria-hidden="true" 
+          tabIndex={-1}
+        />
+
+        {isAccessibleMode && (
           <div
             role="grid"
             aria-label={`Chess board. ${
               isPlayersTurn ? "Your turn." : "Waiting for opponent."
             }`}
-            className="accessible-board"
+            className="accessible-board overlay"
           >
             {rowOrder.map((rank) => (
               <div role="row" className="accessible-board-row" key={rank}>
@@ -462,7 +487,7 @@ function ChessBoard() {
                   const isSelected = moveFrom === square;
                   const isLegalDestination = Boolean(optionSquares[square]);
                   const tabStopSquare = activeSquare || defaultSquare;
-                  const isTabStop = tabStopSquare === square;
+                  const isTabStop = tabStopSquare === square;                  
                   return (
                     <button
                       key={square}
@@ -475,9 +500,7 @@ function ChessBoard() {
                       }}
                       type="button"
                       role="gridcell"
-                      className={`accessible-square${
-                        isSelected ? " selected" : ""
-                      }${isLegalDestination ? " highlighted" : ""}`}
+                      className="accessible-square" 
                       data-square={square}
                       onClick={() => handleAccessibleSquareSelect(square)}
                       onFocus={() => setActiveSquare(square)}
@@ -488,37 +511,20 @@ function ChessBoard() {
                       }${isSelected ? ". Selected." : ""}${
                         isLegalDestination ? " Legal destination." : ""
                       }`}
-                      aria-pressed={isSelected}
+                      data-selected={isSelected}
+                      data-highlighted={isLegalDestination}
                     >
-                      <span aria-hidden="true">{getSymbol(piece)}</span>
+                      <span aria-hidden="true" className="visually-hidden">
+                        {getSymbol(piece)}
+                      </span>
                     </button>
                   );
                 })}
               </div>
             ))}
           </div>
-        </section>
-      )}
-      <Chessboard
-        id="ClickToMove"
-        boardOrientation={playerColor}
-        animationDuration={600}
-        arePiecesDraggable={false}
-        position={game.fen()}
-        onSquareClick={onSquareClick}
-        onSquareRightClick={onSquareRightClick}
-        customBoardStyle={{
-          borderRadius: "4px",
-          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.5)",
-        }}
-        customSquareStyles={{
-          ...optionSquares,
-          ...rightClickedSquares,
-        }}
-        className="chessboard"
-        aria-hidden={isAccessibleMode}
-        tabIndex={-1}
-      />
+        )}
+      </div>
     </div>
   );
 }

@@ -1,3 +1,8 @@
+#root {
+  --box-white: #f6f6f6;
+  --option-white: #ffffff;
+  --bg-white: #e5e5e5;
+}
 html {
   height: 100vh;
   margin: 0;
@@ -7,12 +12,15 @@ body > #root {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: white;
 }
 
 /* * {
   border: 0.5px red solid;
 } */
+
+.island {
+  background-color: var(--box-white);
+}
 
 .app-wrapper {
   margin: 0;
@@ -24,7 +32,7 @@ body > #root {
   padding-bottom: 1vh;
   padding-left: 10vw;
   padding-right: 10vw;
-
+  background-color: var(--bg-white);
   margin: 0;
   height: 70%;
   /* padding-left: 5vw;
@@ -42,9 +50,13 @@ body > #root {
   margin-bottom: auto;
 } */
 
+.control-box {
+  background-color: var(--box-white);
+}
+
 .shadow-box {
   display: block;
-  border: 1px rgb(220, 220, 220) ridge;
+  /* border: 1px rgb(220, 220, 220) ridge; */
   border-radius: 8px;
   box-shadow: 5px 5px 10px 1px rgb(220, 220, 220);
 }
@@ -55,4 +67,29 @@ body > #root {
 
 .footer {
   margin-top: auto;
+}
+
+.mic-button {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  color: black;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.mic-button:active {
+  transform: translateY(-5px) scale(1.05);
+}
+
+.mic-button.listening {
+  background-color: #fb4848;
+  color: white;
 }
