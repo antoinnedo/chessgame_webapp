@@ -15,17 +15,16 @@ const ChessContextProvider = (props) => {
   const [moveHistory, setMoveHistory] = useState([]);
   const [gameStatus, setGameStatus] = useState("notOver");
 
-
-  function safeGameMutate(modify) {
-    return new Promise((resolve, reject) => {
-      setGame((g) => {
-        const update = { ...g };
-        modify(update);
-        resolve();
-        return update;
-      });
-    });
-  }
+  // function safeGameMutate(modify) {
+  //   return new Promise((resolve, reject) => {
+  //     setGame((g) => {
+  //       const update = { ...g };
+  //       modify(update);
+  //       resolve();
+  //       return update;
+  //     });
+  //   });
+  // }
 
   function setNewGame() {
     setGame(new Chess());
@@ -45,30 +44,36 @@ const ChessContextProvider = (props) => {
 
   useEffect(() => {
     ChessAndSocketEventEmitter.on("opponentMakeMove", (data) => {
-      safeGameMutate(async (game) => {
-        // console.log(computerMove);
-        const move = await game.move({
+      // Use the functional setGame to get the latest state, move the copy of the game then update state
+      setGame((g) => {
+        const gameCopy = new Chess(g.fen());
+
+        const move = gameCopy.move({
           from: data.opponentMoveFrom,
           to: data.opponentMoveTo,
           promotion: "q",
         });
-        if (!move) return;
 
-        //Update captured pieces
+        if (!move) return g;
+
         if (move.captured) {
           addCapturedPieces("white", move.captured);
         }
-        //Update moveHistory
+        
+        return gameCopy;
       });
     });
+
     ChessAndSocketEventEmitter.on("setNewGame", () => {
       setNewGame();
     });
+
   }, []);
 
   function playerMakeMove(playerMoveFrom, playerMoveTo, callback) {
-    safeGameMutate(async (game) => {
-      const move = await game.move({
+    setGame((g) => {
+      const gameCopy = new Chess(g.fen());
+      const move = gameCopy.move({
         from: playerMoveFrom,
         to: playerMoveTo,
         promotion: "q",
@@ -76,17 +81,19 @@ const ChessContextProvider = (props) => {
 
       if (move === null) {
         callback(false);
-        return;
+        return g; // Return old state
       }
 
       //Update captured pieces
       if (move.captured) {
         addCapturedPieces("black", move.captured);
       }
-      //Update moveHistory
+      
       callback(true);
+      return gameCopy; // Return new state
     });
   }
+
   function addCapturedPieces(color, pieceSymbol) {
     setCapturedPieces((prevCapturedPieces) => {
       return {
@@ -96,44 +103,42 @@ const ChessContextProvider = (props) => {
     });
   }
 
+  // Simplified this function. No need for Promises.
   function popCapturedPieces(color) {
-    return new Promise((resolve, reject) => {
-      setCapturedPieces((prevCapturedPieces) => {
-        let newCapturedPieces =
-          prevCapturedPieces[color].length > 0
-            ? prevCapturedPieces[color].slice(0, -1)
-            : [...prevCapturedPieces[color]];
-        return {
-          ...prevCapturedPieces,
-          [color]: newCapturedPieces,
-        };
-      });
-
-      resolve();
+    setCapturedPieces((prevCapturedPieces) => {
+      let newCapturedPieces =
+        prevCapturedPieces[color].length > 0
+          ? prevCapturedPieces[color].slice(0, -1)
+          : [...prevCapturedPieces[color]];
+      return {
+        ...prevCapturedPieces,
+        [color]: newCapturedPieces,
+      };
     });
   }
 
-  async function chessUndo() {
-    return new Promise(async (resolve, reject) => {
-      await safeGameMutate((game) => {
-        let captures = [];
-        for (let i = 0; i < 2; i++) {
-          const moveUndo = game.undo();
-          captures.push(moveUndo);
-        }
-        resolve(captures);
-      });
-    });
-  }
+  // Rewritten to use the new immutable pattern
+  function playerUndo() {
+    setGame((g) => {
+      const gameCopy = new Chess(g.fen());
+      const captures = [];
 
-  async function playerUndo() {
-    //Undo twice: computer move and playermove
-    const captures = await chessUndo();
-    for (const capture of captures) {
-      const color = capture.color === "w" ? "black" : "white";
-      await popCapturedPieces(color);
-    }
-    //Update moveHistory
+      // Undo twice
+      const move1 = gameCopy.undo();
+      if (move1) captures.push(move1);
+
+      const move2 = gameCopy.undo();
+      if (move2) captures.push(move2);
+
+      // We can call this right here, since setCapturedPieces
+      // is a separate state update.
+      for (const capture of captures) {
+        const color = capture.color === "w" ? "black" : "white";
+        popCapturedPieces(color);
+      }
+      
+      return gameCopy;
+    });
   }
 
   function updateMoveHistory(verbose) {

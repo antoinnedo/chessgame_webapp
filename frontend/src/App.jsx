@@ -1,14 +1,11 @@
 import "./App.css";
 import { SocketContextProvider } from "./ContextProvider/SocketContextProvider";
-import ControlBox from "./components/ControlBox";
 import { ChessContextProvider } from "./ContextProvider/ChessContextProvider";
-import GameContainer from "./components/GameContainer";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { MDBFooter } from "mdb-react-ui-kit";
 import { VscGithub } from "react-icons/vsc";
 import { AccessibilityContextProvider } from "./ContextProvider/AccessibilityContext";
-import MicButton from "./components/MicButton";
-import VoiceNavigation from "./components/VoiceNavigation";
+import GameLayout from "./components/GameLayout";
 
 function App() {
   return (
@@ -23,17 +20,7 @@ function App() {
                   <SocketContextProvider>
                     <ChessContextProvider>
                       <AccessibilityContextProvider>
-                        <div className="app container-fluid">
-                          <VoiceNavigation />
-                          <div className="row">
-                            <div className="col-lg-8 col-md-12 col-sm-12">
-                              <GameContainer />
-                            </div>
-                            <div className="col-lg-4 col-md-10 col-sm-12">
-                              <ControlBox />
-                            </div>
-                          </div>
-                        </div>
+                          <GameLayout />
                       </AccessibilityContextProvider>
                     </ChessContextProvider>
                   </SocketContextProvider>
