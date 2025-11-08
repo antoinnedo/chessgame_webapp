@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import MicButton from './MicButton';
 import SpeechToText from '../services/SpeechToText';
-import ChessParser from '../services/chessParser';
+import ChessParser from '../services/ChessParser';
 
 export default function VoiceNavigation({ onMoveFound }) {
   const [isListening, setIsListening] = useState(false);
