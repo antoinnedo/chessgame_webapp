@@ -46,7 +46,8 @@ const ChessContextProvider = (props) => {
     ChessAndSocketEventEmitter.on("opponentMakeMove", (data) => {
       // Use the functional setGame to get the latest state, move the copy of the game then update state
       setGame((g) => {
-        const gameCopy = new Chess(g.fen());
+        const gameCopy = new Chess();
+        const loadSuccess = gameCopy.load_pgn(g.pgn());
 
         const move = gameCopy.move({
           from: data.opponentMoveFrom,
@@ -72,7 +73,9 @@ const ChessContextProvider = (props) => {
 
   function playerMakeMove(playerMoveFrom, playerMoveTo, callback) {
     setGame((g) => {
-      const gameCopy = new Chess(g.fen());
+      const gameCopy = new Chess();
+      gameCopy.load_pgn(g.pgn());
+
       const move = gameCopy.move({
         from: playerMoveFrom,
         to: playerMoveTo,
@@ -120,23 +123,39 @@ const ChessContextProvider = (props) => {
   // Rewritten to use the new immutable pattern
   function playerUndo() {
     setGame((g) => {
-      const gameCopy = new Chess(g.fen());
-      const captures = [];
+      // Create a new copy of the game
+      const gameCopy = new Chess();
+      gameCopy.load_pgn(g.pgn());
+      let undoneMoves = [];
 
-      // Undo twice
+      // Try to undo the player's move
       const move1 = gameCopy.undo();
-      if (move1) captures.push(move1);
+      if (move1) undoneMoves.push(move1);
 
+      // Try to undo the opponent's move
       const move2 = gameCopy.undo();
-      if (move2) captures.push(move2);
+      if (move2) undoneMoves.push(move2);
 
-      // We can call this right here, since setCapturedPieces
-      // is a separate state update.
-      for (const capture of captures) {
-        const color = capture.color === "w" ? "black" : "white";
-        popCapturedPieces(color);
+      console.log("Moves undone:", undoneMoves.length);
+
+      // If no moves were undone (e.g., start of game),
+      // just return the original state.
+      if (undoneMoves.length === 0) {
+        return g;
+      }
+
+      // Now, iterate the *valid* undone moves
+      for (const undoneMove of undoneMoves) {
+        // Check if this undone move *was* a capture
+        if (undoneMove.captured) {
+          // The move 'color' is the one who made the move.
+          // The captured piece is the *opposite* color.
+          const colorOfCapturedArray = undoneMove.color === "w" ? "black" : "white";
+          popCapturedPieces(colorOfCapturedArray);
+        }
       }
       
+      // Return the new game state to trigger the re-render
       return gameCopy;
     });
   }

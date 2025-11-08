@@ -83,11 +83,23 @@ function RoomLinkBox() {
 }
 
 export default function ControlBox() {
-  const { playerUndoEmit, setNewGameEmit, setDifficultyEmit, setAIModelEmit } =
-    useContext(SocketContext);
-  const { playerUndo, checkTurn, setNewGame, gameStatus } =
-    useContext(ChessContext);
-  const { isAccessibleMode, setAccessibleMode } = useContext(AccessibilityContext);
+  const { 
+    playerColor,
+    playerUndoEmit, 
+    setNewGameEmit, 
+    setDifficultyEmit, 
+    setAIModelEmit 
+  } = useContext(SocketContext);
+  const { 
+    playerUndo, 
+    checkTurn, 
+    setNewGame, 
+    gameStatus 
+  } = useContext(ChessContext);
+  const { 
+    isAccessibleMode, 
+    setAccessibleMode 
+  } = useContext(AccessibilityContext);
 
   //Message Box
   const [message, setMessage] = useState("");
@@ -105,18 +117,24 @@ export default function ControlBox() {
       if (!succeed) alert("Please try setting difficulty again");
     });
   }
+
   function onClickUndoButton(evt) {
-    if (checkTurn() !== "w") {
+    const playerSide = playerColor === "white" ? "w" : "b";
+
+    if (checkTurn() !== playerSide) {
+      console.log("Failed check: Not your turn.");
       setVisibleMessageBox(true);
       setMessageType("warning");
-      setMessage("Please wait until the computer finishes its turn.");
+      setMessage("Please wait until the opponent finishes their turn.");
       setTimeout(() => {
         setMessage("");
         setVisibleMessageBox(false);
       }, 1600);
       return;
     }
+    
     playerUndoEmit((succeed) => {
+      console.log("playerUndoEmit succeeded:", succeed);
       if (succeed) {
         playerUndo();
       }

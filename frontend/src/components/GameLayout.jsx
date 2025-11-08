@@ -40,7 +40,7 @@ export default function GameLayout() {
         console.error("Move failed validation:", fromSquare, toSquare);
         return;
       }
-      if (gameStatus == "notOver") {
+      if (gameStatus === "notOver") {
         setTimeout(playerMakeMoveEmit, 300, fromSquare, toSquare);
       }
     });

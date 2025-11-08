@@ -45,22 +45,23 @@ export default class ChessParser {
    * @returns {string|null} The move in SAN notation or null if not found.
    */
   parse(text) {
-    if (!text) return null;
-
     const normalizedText = this.normalize(text);
     console.log(`Normalized text: "${normalizedText}"`);
 
-    // Regex to find a SAN move (e.g., Nf3, e4, O-O, a8=Q)
-    const moveRegex = /\b([KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](=[QRBN])?[+#]?|O-O-O|O-O)\b/i;
-    
-    for (let i = normalizedText.length; i > 0; i--) {
-      const sub = normalizedText.substring(i - 1);
-      const matches = sub.match(moveRegex);
-      if (matches) {
-        return matches[0];
+    const moveRegex = /([KQRBN]?[a-h]?[1-8]?x?[a-h][1-8](=[QRBN])?[+#]?|O-O-O|O-O)/gi;
+    const matches = [...normalizedText.matchAll(moveRegex)];
+
+    if (matches.length === 0) {
+      return null; 
+    }
+
+    let longestMatch = "";
+    for (const match of matches) {
+      if (match[0].length > longestMatch.length) {
+        longestMatch = match[0];
       }
     }
     
-    return null;
+    return longestMatch;
   }
 }
