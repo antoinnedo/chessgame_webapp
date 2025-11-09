@@ -11,6 +11,7 @@ import { SocketContext } from "../ContextProvider/SocketContextProvider";
 import { ChessContext } from "../ContextProvider/ChessContextProvider";
 import { AccessibilityContext } from "../ContextProvider/AccessibilityContext";
 import "./AccessibleChessBoard.css";
+import { speak } from '../services/TextToSpeech'; 
 
 const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const ranks = ["1", "2", "3", "4", "5", "6", "7", "8"];
@@ -112,11 +113,13 @@ function ChessBoard() {
           : lastMove.san.includes("+")
           ? " Check."
           : ".";
-        setLiveAnnouncement(
-          `${mover} ${pieceName} from ${formatSquare(lastMove.from)} to ${formatSquare(
-            lastMove.to
-          )}${captureText}${checkText}`
-        );
+        
+        const announcementString = `${mover} ${pieceName} from ${formatSquare(
+          lastMove.from
+        )} to ${formatSquare(lastMove.to)}${captureText}${checkText}`;
+        
+        setLiveAnnouncement(announcementString);
+        speak(announcementString);
       }
       previousHistoryLength.current = history.length;
     }

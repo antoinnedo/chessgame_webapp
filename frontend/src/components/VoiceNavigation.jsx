@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import MicButton from './MicButton';
 import SpeechToText from '../services/SpeechToText';
 import ChessParser from '../services/ChessParser';
+import { speak } from '../services/TextToSpeech'; 
 
 export default function VoiceNavigation({ onMoveFound, isMyTurn }) {
   const [isListening, setIsListening] = useState(false);
@@ -30,15 +31,6 @@ export default function VoiceNavigation({ onMoveFound, isMyTurn }) {
     console.log("SpeechToText ready:", speechRef.current);
     console.log("Supported:", speechRef.current.supported);
   }, []);
-
-  const speak = (msg) => {
-    if ('speechSynthesis' in window) {
-      const utter = new SpeechSynthesisUtterance(msg);
-      utter.rate = 1.1;
-      window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(utter);
-    }
-  };
 
   const trySubmit = useCallback((raw, confidence) => {
     if (confidence < MIN_CONFIDENCE) return;
