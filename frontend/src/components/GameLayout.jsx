@@ -57,7 +57,10 @@ export default function GameLayout() {
 
   return (
     <div className="app container-fluid">
-      <VoiceNavigation onMoveFound={handleVoiceMove} />
+      <VoiceNavigation 
+        onMoveFound={handleVoiceMove} 
+        isMyTurn={game.turn() === (playerColor === "white" ? "w" : "b")}
+      />
       
       <div className="row">
         <div className="col-lg-8 col-md-12 col-sm-12">

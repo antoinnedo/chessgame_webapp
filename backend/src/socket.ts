@@ -2,9 +2,10 @@ import { Server as HttpServer } from "http";
 import { Socket, Server } from "socket.io";
 import { ChessMinimaxModel, GameStatus } from "./model/ChessMinimaxModel";
 import { v4 as uuidv4 } from "uuid";
-import { ChessEngine } from "./model/ChessModel";
+// import { ChessEngine } from "./model/ChessModel";
 import ChessAIModelInterface from "./model/ChessAIModelInterface";
 import ChessStockfishModel from "./model/ChessStockfishEngine";
+import { Chess } from "chess.js";
 
 type Color = "white" | "black";
 
@@ -27,6 +28,22 @@ export class ServerSocket {
   > = new Map(); //RoomID: {whiteSocketID, blackSocketID}
 
   /** Master list of all connected rooms */
+
+  private sendMoveFeedback(
+    socket: Socket,
+    accepted: boolean,
+    san: string,
+    roomID?: string
+  ) {
+    const payload = { accepted, san };
+    if (roomID) {
+      // multiplayer – tell both players
+      this.io.to(roomID).emit("move-feedback", payload);
+    } else {
+      // AI – only the player who moved
+      socket.emit("move-feedback", payload);
+    }
+  }
 
   constructor(server: HttpServer) {
     ServerSocket.instance = this;
@@ -167,18 +184,36 @@ export class ServerSocket {
         const socketInfo = this.socketsRecord.get(socket.id);
         if (!socketInfo) return;
         const roomID = socketInfo.roomID;
+        const isMultiplayer = socketInfo.isInMultiplayerMode;
 
-        if (socketInfo.isInMultiplayerMode) {
-          // Multiplayer mode
-          socket
-            .to(roomID)
-            .emit("opponentMakeMove", playerMoveFrom, playerMoveTo);
+        // if (socketInfo.isInMultiplayerMode) {
+        //   // Multiplayer mode
+        //   socket
+        //     .to(roomID)
+        //     .emit("opponentMakeMove", playerMoveFrom, playerMoveTo);
+        //   return;
+        // }
+
+        let move;
+        
+        try {
+          // You probably already have a Chess instance in chessEngine
+          const fen = chessEngine?.getFen() || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+          const game = new Chess(fen);
+          move = game.move({ from: playerMoveFrom, to: playerMoveTo });
+        } catch (e) {
+          this.sendMoveFeedback(socket, false, `${playerMoveFrom}${playerMoveTo}`, isMultiplayer ? roomID : undefined);
+          return;
+        }
+
+        if (!move) {
+          this.sendMoveFeedback(socket, false, `${playerMoveFrom}${playerMoveTo}`, isMultiplayer ? roomID : undefined);
           return;
         }
 
         // AI Mode
         if (!chessEngine) {
-          console.warn(`Engine for room ${roomID} not loaded yet, ignoring move.`);
+          // console.warn(`Engine for room ${roomID} not loaded yet, ignoring move.`);
           return; // Engine is still loading, just drop the move.
         }
         
@@ -187,7 +222,7 @@ export class ServerSocket {
           playerMoveTo
         );
 
-        let [opponentMoveFrom, opponentMoveTo] = await chessEngine.computerMakingMove();
+        const [opponentMoveFrom, opponentMoveTo] = await chessEngine.computerMakingMove();
 
         if (opponentMoveFrom && opponentMoveTo)
           socket.emit("opponentMakeMove", opponentMoveFrom, opponentMoveTo);

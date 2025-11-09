@@ -7,6 +7,10 @@ export default class ChessParser {
       .replace(/\b(pawn|upon|on|go|move)\b/g, '')
       .replace(/\b(takes|captures|x)\b/g, 'x')
       .replace(/\b(castle|castles)\b/g, 'O-O')
+      //castling variations
+      .replace(/\b(castle|castles)\s+(kingside|king-side|short)\b/g, 'O-O')      // explicit kingside
+      .replace(/\b(castle|castles)\s+(queenside|queen-side|left|long)\b/g, 'O-O-O') // explicit queenside
+       .replace(/\b(castle|castles)\b/g, 'O-O')
       // Convert number words to digits
       .replace(/\b(one|1)\b/g, '1')
       .replace(/\b(two|to|too)\b/g, '2') // "to" is often heard for "2"
@@ -33,8 +37,10 @@ export default class ChessParser {
       .replace(/\b(g|gee)\b/g, 'g')
       .replace(/\b(h|aitch)\b/g, 'h')
       // Handle common words
-      .replace(/\b(castle|castles)\b/g, 'O-O')
-      .replace(/\b(takes|captures|x)\b/g, 'x')
+      .replace(/O-O-O/g, 'O-O-O')     // normalize queenside
+      .replace(/O-O/g, 'O-O')         // normalize kingside
+      .replace(/([a-h])\1+/g, '$1')   // dedupe file: aa4 → a4
+      .replace(/([1-8])\1+/g, '$1')   // dedupe rank: e44 → e4
       // Remove all remaining spaces
       .replace(/(\s)+/g, '');
   }

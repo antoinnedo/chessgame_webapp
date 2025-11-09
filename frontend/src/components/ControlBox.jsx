@@ -122,7 +122,6 @@ export default function ControlBox() {
     const playerSide = playerColor === "white" ? "w" : "b";
 
     if (checkTurn() !== playerSide) {
-      console.log("Failed check: Not your turn.");
       setVisibleMessageBox(true);
       setMessageType("warning");
       setMessage("Please wait until the opponent finishes their turn.");
