@@ -141,7 +141,7 @@ export class ServerSocket {
 
           this.updateSocketsRecord(clientRoomID, socket.id, "black", true);
           this.udpateRoomsRecord(clientRoomID, socket.id, "black");
-          
+
           // Check if white socket still exists before accessing it
           const whiteSocketID = this.roomsRecord.get(clientRoomID)!.white;
           const whiteSocketRecord = this.socketsRecord.get(whiteSocketID);
@@ -186,16 +186,16 @@ export class ServerSocket {
         const roomID = socketInfo.roomID;
         const isMultiplayer = socketInfo.isInMultiplayerMode;
 
-        // if (socketInfo.isInMultiplayerMode) {
-        //   // Multiplayer mode
-        //   socket
-        //     .to(roomID)
-        //     .emit("opponentMakeMove", playerMoveFrom, playerMoveTo);
-        //   return;
-        // }
+        if (socketInfo.isInMultiplayerMode) {
+          // Multiplayer mode
+          socket
+            .to(roomID)
+            .emit("opponentMakeMove", playerMoveFrom, playerMoveTo);
+          return;
+        }
 
         let move;
-        
+
         try {
           // You probably already have a Chess instance in chessEngine
           const fen = chessEngine?.getFen() || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
@@ -216,7 +216,7 @@ export class ServerSocket {
           // console.warn(`Engine for room ${roomID} not loaded yet, ignoring move.`);
           return; // Engine is still loading, just drop the move.
         }
-        
+
         chessEngine.updatePlayerMove(
           playerMoveFrom,
           playerMoveTo
@@ -257,7 +257,7 @@ export class ServerSocket {
           callback(false);
           return;
         }
-        
+
         if (!chessEngine) {
           callback(false); // engine not loaded
           return;

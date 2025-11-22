@@ -1,5 +1,5 @@
 import { useContext } from "react";
-import "./ChessCaptureBox.css";
+import "../styling/ChessCaptureBox.css";
 import { SocketContext } from "../ContextProvider/SocketContextProvider";
 import { ChessContext } from "../ContextProvider/ChessContextProvider";
 

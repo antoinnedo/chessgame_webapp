@@ -1,27 +1,39 @@
-export default function MicButton({ isListening, onClick }) {
+import React from 'react';
+import { Fab } from '@mui/material';
+import MicIcon from '@mui/icons-material/Mic';
+import MicOffIcon from '@mui/icons-material/MicOff';
+import HearingIcon from '@mui/icons-material/Hearing'; // New icon for "Monitoring"
+
+export default function MicButton({ isMonitoring, isRecording, onClick }) {
+  let color = "primary"; //Blue
+  let icon = <MicOffIcon fontSize="medium"  />;
+  let className = "";
+
+  if (isRecording) {
+    // STATE: Hearing Voice (Recording)
+    color = "error"; // Red
+    icon = <MicIcon fontSize="medium" />;
+    className = "animate-pulse shadow-lg shadow-red-400/50";
+  } else if (isMonitoring) {
+    // STATE: Waiting for Voice (Monitoring)
+    color = "success"; // Green
+    icon = <HearingIcon fontSize="medium"  />;
+    className = "shadow-lg shadow-green-400/50";
+  }
 
   return (
-    <button
-      className={`mic-button ${isListening ? "listening" : ""} island shadow-box`}
+    <Fab
+      size="medium"
       onClick={onClick}
-      aria-pressed={isListening}
-      aria-label={isListening ? "Stop voice input" : "Start voice input"}
+      color={color}
+      aria-label={isMonitoring ? "Stop Monitoring" : "Start Monitoring"}
+      sx={{
+        zIndex: 10,
+        transition: 'all 0.3s ease'
+      }}
+      className={className}
     >
-      {isListening ? (
-        <span role="img" aria-label="Microphone on">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-mic-fill" viewBox="0 0 16 16">
-              <path d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0z"/>
-              <path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5"/>
-            </svg>
-        </span>
-      ) : (
-        <span role="img" aria-label="Microphone off">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-mic-mute-fill" viewBox="0 0 16 16">
-            <path d="M13 8c0 .564-.094 1.107-.266 1.613l-.814-.814A4 4 0 0 0 12 8V7a.5.5 0 0 1 1 0zm-5 4c.818 0 1.578-.245 2.212-.667l.718.719a5 5 0 0 1-2.43.923V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 1 0v1a4 4 0 0 0 4 4m3-9v4.879L5.158 2.037A3.001 3.001 0 0 1 11 3"/>
-            <path d="M9.486 10.607 5 6.12V8a3 3 0 0 0 4.486 2.607m-7.84-9.253 12 12 .708-.708-12-12z"/>
-          </svg>
-        </span>
-      )}
-    </button>
+      {icon}
+    </Fab>
   );
 }

@@ -1,3 +1,4 @@
+import "../App.css";
 import React, { useContext, useEffect, useCallback } from 'react';
 import { Chess } from 'chess.js';
 import { ChessContext } from '../ContextProvider/ChessContextProvider';
@@ -55,12 +56,13 @@ export default function GameLayout() {
     };
   }, [handleVoiceMove]);
 
+  const isMyTurn = game.turn() === (playerColor === "white" ? "w" : "b");
+
   return (
     <div className="app container-fluid">
       <VoiceNavigation 
-        onMoveFound={handleVoiceMove} 
-        isMyTurn={game.turn() === (playerColor === "white" ? "w" : "b")}
-      />
+      isMyTurn={isMyTurn} 
+      onMoveFound={handleVoiceMove} />
       
       <div className="row">
         <div className="col-lg-8 col-md-12 col-sm-12">

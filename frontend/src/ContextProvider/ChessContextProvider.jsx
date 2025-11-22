@@ -6,6 +6,7 @@ import { ChessAndSocketEventEmitter } from "./ChessAndSocketEventEmitter";
 const ChessContext = createContext();
 
 const ChessContextProvider = (props) => {
+  const [liveAnnouncement, setLiveAnnouncement] = useState("");
   const { playerColor } = useContext(SocketContext);
   const [game, setGame] = useState(new Chess());
   const [capturedPieces, setCapturedPieces] = useState({
@@ -35,6 +36,13 @@ const ChessContextProvider = (props) => {
     setMoveHistory([]);
   }
 
+  function setNewGameEmit() {
+    // Call the local function first
+    setNewGame();
+    // Then tell the opponent
+    ChessAndSocketEventEmitter.emit("setNewGame");
+  }
+
   function playerMakeMoveEmit(playerMoveFrom, playerMoveTo) {
     ChessAndSocketEventEmitter.emit("playerMakeMove", {
       playerMoveFrom,
@@ -58,8 +66,11 @@ const ChessContextProvider = (props) => {
         if (!move) return g;
 
         if (move.captured) {
-          addCapturedPieces("white", move.captured);
+          const capturedColorArray = move.color === 'w' ? 'black' : 'white';
+          addCapturedPieces(capturedColorArray, move.captured);
         }
+
+        setLiveAnnouncement(`Opponent moved ${move.piece} from ${move.from} to ${move.to}.`);
         
         return gameCopy;
       });
@@ -69,6 +80,10 @@ const ChessContextProvider = (props) => {
       setNewGame();
     });
 
+    return () => {
+      ChessAndSocketEventEmitter.off("opponentMakeMove");
+      ChessAndSocketEventEmitter.off("setNewGame");
+    }
   }, []);
 
   function playerMakeMove(playerMoveFrom, playerMoveTo, callback) {
@@ -179,7 +194,22 @@ const ChessContextProvider = (props) => {
 
   useEffect(() => {
     updateMoveHistory(true);
-    setGameStatus(checkGameStatus());
+    const status = checkGameStatus();
+    setGameStatus(status);
+
+    if (status === "blackWin") {
+      setLiveAnnouncement("Checkmate. Black wins.");
+    } else if (status === "whiteWin") {
+      setLiveAnnouncement("Checkmate. White wins.");
+    } else if (status === "draw") {
+      setLiveAnnouncement("Game is a draw.");
+    } else if (status === "notOver") {
+
+      if (game.in_check()) {
+        const playerInCheck = game.turn() === 'w' ? "White" : "Black";
+        setLiveAnnouncement(`${playerInCheck} is in check.`);
+      }
+    }
   }, [game]);
 
   return (
@@ -193,7 +223,10 @@ const ChessContextProvider = (props) => {
         moveHistory,
         checkTurn,
         setNewGame,
-        gameStatus
+        setNewGameEmit,
+        gameStatus,
+        liveAnnouncement,
+        setLiveAnnouncement,
       }}
     >
       {props.children}

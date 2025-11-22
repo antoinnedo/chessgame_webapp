@@ -4,7 +4,7 @@ import { BiUndo, BiRefresh } from "react-icons/bi";
 import { FiClipboard } from "react-icons/fi";
 import { Tooltip } from "react-tooltip";
 
-import "./ControlBox.css";
+import "../styling/ControlBox.css";
 import { ChessContext } from "../ContextProvider/ChessContextProvider";
 import { SocketContext } from "../ContextProvider/SocketContextProvider";
 import { AccessibilityContext } from "../ContextProvider/AccessibilityContext";
@@ -83,22 +83,22 @@ function RoomLinkBox() {
 }
 
 export default function ControlBox() {
-  const { 
+  const {
     playerColor,
-    playerUndoEmit, 
-    setNewGameEmit, 
-    setDifficultyEmit, 
-    setAIModelEmit 
+    playerUndoEmit,
+    setNewGameEmit,
+    setDifficultyEmit,
+    setAIModelEmit
   } = useContext(SocketContext);
-  const { 
-    playerUndo, 
-    checkTurn, 
-    setNewGame, 
-    gameStatus 
+  const {
+    playerUndo,
+    checkTurn,
+    setNewGame,
+    gameStatus
   } = useContext(ChessContext);
-  const { 
-    isAccessibleMode, 
-    setAccessibleMode 
+  const {
+    isAccessibleMode,
+    setAccessibleMode
   } = useContext(AccessibilityContext);
 
   //Message Box
@@ -131,7 +131,7 @@ export default function ControlBox() {
       }, 1600);
       return;
     }
-    
+
     playerUndoEmit((succeed) => {
       console.log("playerUndoEmit succeeded:", succeed);
       if (succeed) {
@@ -234,23 +234,23 @@ export default function ControlBox() {
         <div className="button-box">
           <button
             type="button"
-            className="button circle-frame"
+            className="mui-fab"
             onClick={onClickUndoButton}
             data-tooltip-id="bottom-tooltip"
             data-tooltip-content="Undo"
             aria-label="Undo last move"
           >
-            <BiUndo size="3.5vh" aria-hidden="true" />
+            <BiUndo size="2rem" color={'grey'}/>
           </button>
           <button
             type="button"
-            className="button circle-frame"
+            className="mui-fab"
             onClick={onClickNewGameButton}
             data-tooltip-id="bottom-tooltip"
             data-tooltip-content="New Game"
             aria-label="Start a new game"
           >
-            <BiRefresh size="3.5vh" aria-hidden="true" />
+            <BiRefresh size="2rem" color={'grey'} />
           </button>
         </div>
       </div>

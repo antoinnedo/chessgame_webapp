@@ -10,8 +10,8 @@ import { Chessboard } from "react-chessboard";
 import { SocketContext } from "../ContextProvider/SocketContextProvider";
 import { ChessContext } from "../ContextProvider/ChessContextProvider";
 import { AccessibilityContext } from "../ContextProvider/AccessibilityContext";
-import "./AccessibleChessBoard.css";
-import { speak } from '../services/TextToSpeech'; 
+import "../styling/AccessibleChessBoard.css";
+import { speak } from '../services/TextToSpeech';
 
 const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const ranks = ["1", "2", "3", "4", "5", "6", "7", "8"];
@@ -65,8 +65,14 @@ function getSymbol(piece) {
 }
 
 function ChessBoard() {
-  const { game, gameStatus, playerMakeMoveEmit, playerMakeMove } =
-    useContext(ChessContext);
+  const {
+    game,
+    gameStatus,
+    playerMakeMoveEmit,
+    playerMakeMove,
+    liveAnnouncement,
+    setLiveAnnouncement,
+  } = useContext(ChessContext);
   const { playerColor } = useContext(SocketContext);
   const { isAccessibleMode } = useContext(AccessibilityContext);
 
@@ -74,7 +80,6 @@ function ChessBoard() {
   const [rightClickedSquares, setRightClickedSquares] = useState({});
   const [optionSquares, setOptionSquares] = useState({});
   const [activeSquare, setActiveSquare] = useState("");
-  const [liveAnnouncement, setLiveAnnouncement] = useState("");
 
   const squareRefs = useRef(new Map());
   const previousHistoryLength = useRef(
@@ -113,11 +118,11 @@ function ChessBoard() {
           : lastMove.san.includes("+")
           ? " Check."
           : ".";
-        
+
         const announcementString = `${mover} ${pieceName} from ${formatSquare(
           lastMove.from
         )} to ${formatSquare(lastMove.to)}${captureText}${checkText}`;
-        
+
         setLiveAnnouncement(announcementString);
         speak(announcementString);
       }
@@ -434,7 +439,7 @@ function ChessBoard() {
   return (
     <div className="chessboard-wrapper">
       <div
-        className={`announcer${isAccessibleMode ? "" : " visually-hidden"}`}
+        className="sr-only"
         role="status"
         aria-live="polite"
         aria-atomic="true"
@@ -442,15 +447,15 @@ function ChessBoard() {
         {liveAnnouncement}
       </div>
 
-      {isAccessibleMode && (
-        <p className="accessible-board-instructions">
-          Use Tab to leave the board. Use arrow keys to explore squares and
-          press Enter or Space to pick up or drop a piece.
-        </p>
-      )}
+      {/*{isAccessibleMode && (*/}
+      {/*  <p className="accessible-board-instructions">*/}
+      {/*    Use Tab to leave the board. Use arrow keys to explore squares and*/}
+      {/*    press Enter or Space to pick up or drop a piece.*/}
+      {/*  </p>*/}
+      {/*)}*/}
 
       <div className="board-stack-container">
-        
+
         <Chessboard
           id="ClickToMove"
           boardOrientation={playerColor}
@@ -470,7 +475,7 @@ function ChessBoard() {
             ...rightClickedSquares,
           }}
           className="chessboard"
-          aria-hidden="true" 
+          aria-hidden="true"
           tabIndex={-1}
         />
 
@@ -490,7 +495,7 @@ function ChessBoard() {
                   const isSelected = moveFrom === square;
                   const isLegalDestination = Boolean(optionSquares[square]);
                   const tabStopSquare = activeSquare || defaultSquare;
-                  const isTabStop = tabStopSquare === square;                  
+                  const isTabStop = tabStopSquare === square;
                   return (
                     <button
                       key={square}
@@ -503,7 +508,7 @@ function ChessBoard() {
                       }}
                       type="button"
                       role="gridcell"
-                      className="accessible-square" 
+                      className="accessible-square"
                       data-square={square}
                       onClick={() => handleAccessibleSquareSelect(square)}
                       onFocus={() => setActiveSquare(square)}

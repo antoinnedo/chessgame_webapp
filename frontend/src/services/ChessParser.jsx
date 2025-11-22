@@ -5,7 +5,7 @@ export default class ChessParser {
       .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"")
       .replace(/\b(to|too|2)\b/g, '')
       .replace(/\b(pawn|upon|on|go|move)\b/g, '')
-      .replace(/\b(takes|captures|x)\b/g, 'x')
+      .replace(/\b(takes|tech|text|captures|x)\b/g, 'x')
       .replace(/\b(castle|castles)\b/g, 'O-O')
       //castling variations
       .replace(/\b(castle|castles)\s+(kingside|king-side|short)\b/g, 'O-O')      // explicit kingside
@@ -37,6 +37,7 @@ export default class ChessParser {
       .replace(/\b(g|gee)\b/g, 'g')
       .replace(/\b(h|aitch)\b/g, 'h')
       // Handle common words
+      .replace(/\b(recording|record)\b/g, '')
       .replace(/O-O-O/g, 'O-O-O')     // normalize queenside
       .replace(/O-O/g, 'O-O')         // normalize kingside
       .replace(/([a-h])\1+/g, '$1')   // dedupe file: aa4 → a4
@@ -58,7 +59,7 @@ export default class ChessParser {
     const matches = [...normalizedText.matchAll(moveRegex)];
 
     if (matches.length === 0) {
-      return null; 
+      return null;
     }
 
     let longestMatch = "";
@@ -67,7 +68,7 @@ export default class ChessParser {
         longestMatch = match[0];
       }
     }
-    
+
     return longestMatch;
   }
 }

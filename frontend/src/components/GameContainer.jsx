@@ -5,7 +5,7 @@ import ChessCaptureBox from "./ChessCaptureBox";
 import ChessBoard from "./ChessBoard";
 
 import { MDBSpinner } from "mdb-react-ui-kit";
-import "./GameContainer.css";
+import "../styling/GameContainer.css";
 
 export default function GameContainer(props) {
   const { isConnected } = useContext(SocketContext);
