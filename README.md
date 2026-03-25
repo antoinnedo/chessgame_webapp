@@ -1,48 +1,44 @@
+# ChessLand: Accessibility and AI Voice Revamp
 
-# ChessLand
+This project is a fork from [ChessLand](https://github.com/dominhnhut01/chessgame_webapp). 
 
-Welcome to ChessLand, a web application where you can play chess against AI or challenge your friends! This app provides a user-friendly interface for playing chess online, making it easy for both beginners and experienced players to enjoy the game.
+## Mission
 
-## Features
+The primary mission of this project is to create a fully accessible and hands-free chess experience. By combining rigorous accessibility standards with a highly accurate AI voice recognition system, this application ensures that visually impaired users or those requiring hands-free controls can seamlessly navigate and play the game.
 
-- Play against AI: Challenge our intelligent AI opponent and improve your chess skills. You can choose either Stockfish or Minimax AI.
-- Play with a friend: Invite your friend to a game and play together.
-- Interactive interface: Enjoy a visually appealing and intuitive user interface for a seamless gaming experience.
-- Move validation: The app ensures that all moves adhere to the rules of chess.
-- Game history: Access a log of your moves throughout the game for review and analysis.
-- Undo moves: Made a mistake? No worries! You can undo moves and correct your strategy.
-- Promote pawns: Automatically promote your pawns to any desired piece upon reaching the eighth rank.
-- Game status indicators: Stay updated with the current game status, including checkmate, stalemate, and draw.
-- Responsive design: The app adapts to different screen sizes, allowing you to play on desktops, tablets, or mobile devices.
+## Accessibility Features
 
-## Demo
+To achieve comprehensive accessibility and WRAI compliance, the interface has been completely restructured:
 
-You can try out ChessLand by visiting our [live demo](https://chess-land.netlify.app/) hosted on Linode and Netlify.
-Also, here are some real footage you can watch:
-#### Singleplayer (vs AI):
-<img src='https://github.com/dominhnhut01/chessgame_webapp/blob/main/singleplayer_demo.gif?raw=true' title='Singleplayer Demo' width='900' alt='Singleplayer Demo' />
+* **Initial Setup Prompt:** Upon launching the application, users are greeted with a fully accessible dialog prompt asking if they wish to enable voice mode and accessibility features. This choice is saved locally to respect user preferences.
+* **Revamped Board Wrapper:** The standard chessboard has been overlaid with a mathematically accurate, visually hidden HTML grid.
+* **Easy Navigation:** Users can navigate the entire application using standard keyboard controls. The `Tab` key seamlessly moves focus between control components, while the `Arrow` keys allow users to explore individual squares on the chessboard to check piece positions and execute moves.
 
-#### Multiplayer (invite your friend):
-<img src='https://github.com/dominhnhut01/chessgame_webapp/blob/main/multiplayer_demo.gif?raw=true' title='Multiplayer Demo' width='900' alt='Multiplayer Demo' />
+## AI Voice Control: The Hybrid Engine
 
-## Technologies Used
+The application features a smart voice detection system powered by a dual-engine approach to balance speed and accuracy.
 
-### Frontend
-- React: JavaScript library for building user interfaces.
-- Socket.io: Real-time communication library for enabling multiplayer functionality.
+### Native WebSpeech
+For instantaneous recognition, the app utilizes the browser's native WebSpeech API. While this engine provides near-zero latency, it is primarily limited to Google Chrome and often struggles with the specific formatting of standard algebraic chess notation (e.g., "Knight to f3"). 
 
-### Backend
-- Minimax search for AI agent: An algorithm used for AI opponents in chess that makes optimal decisions based on game tree exploration, can explore over 3 million moves in future.
-- State-of-the-art Stockfish Engine powered
-- Socket.io: Real-time communication library for enabling multiplayer functionality.
-- Node.js + TypeScript
+### OpenAI Whisper API Integration
+To overcome the inaccuracies of native recognition, this project implements a specialized pipeline using the OpenAI Whisper API.
 
-### Deployment
-- Manually deployed with NGINX on Linode Linux Server
+**How it works:**
+The recording system captures microphone input and continuously divides the audio stream into optimized 250ms audio blobs. By separating the ongoing audio recording process from the actual transcription request, the system minimizes latency. Once the user stops speaking, the combined audio blob is immediately processed by the local backend and sent to Whisper. 
 
-## Future Improvement
-- Adding video chat feature in multiplayer mode to enhance player interaction
+This architecture provides the high-precision transcription required for complex chess moves, bridging the gap where the fast-but-inaccurate WebSpeech engine fails.
 
-## Reference
-- <a href="https://www.flaticon.com/free-stickers/animals" title="animals stickers">Animals stickers created by Stickers - Flaticon</a>
-- Stockfish Chess Engine: <a href="https://stockfishchess.org/">Home Page</a>
+## Project Demo
+
+### Interface Previews
+**First-Time Accessibility Prompt:**
+![Accessibility Prompt](./AccessibilityPrompt.png)
+
+**New Application UI:**
+![New UI](./NewUI.png)
+
+### Video Demonstration
+Click the thumbnail below to watch the full video demonstration of the accessibility and voice features in action:
+
+[![Watch the Demo](./Thumbnail.png)](https://drive.google.com/file/d/1-oxl_xo83So85EvpfDxNdsB2CuxFcEHo/view?usp=sharing)
