@@ -11,7 +11,6 @@ import { SocketContext } from "../ContextProvider/SocketContextProvider";
 import { ChessContext } from "../ContextProvider/ChessContextProvider";
 import { AccessibilityContext } from "../ContextProvider/AccessibilityContext";
 import "../styling/AccessibleChessBoard.css";
-import { speak } from '../services/TextToSpeech';
 
 const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const ranks = ["1", "2", "3", "4", "5", "6", "7", "8"];
@@ -124,11 +123,10 @@ function ChessBoard() {
         )} to ${formatSquare(lastMove.to)}${captureText}${checkText}`;
 
         setLiveAnnouncement(announcementString);
-        speak(announcementString);
       }
       previousHistoryLength.current = history.length;
     }
-  }, [history]);
+  }, [history, setLiveAnnouncement]);
 
   useEffect(() => {
     if (isAccessibleMode) {
@@ -140,7 +138,7 @@ function ChessBoard() {
     } else {
       setActiveSquare("");
     }
-  }, [defaultSquare, isAccessibleMode]);
+  }, [defaultSquare, isAccessibleMode, setLiveAnnouncement]);
 
   useEffect(() => {
     if (!isAccessibleMode) {
@@ -210,7 +208,7 @@ function ChessBoard() {
         );
       }
     },
-    [gameStatus, isAccessibleMode, playerMakeMoveEmit]
+    [gameStatus, isAccessibleMode, playerMakeMoveEmit, setLiveAnnouncement]
   );
 
   const moveFocusBy = useCallback(
@@ -331,6 +329,7 @@ function ChessBoard() {
       playerMakeMove,
       playerSide,
       resetSelection,
+      setLiveAnnouncement
     ]
   );
 
@@ -370,7 +369,7 @@ function ChessBoard() {
           break;
       }
     },
-    [handleAccessibleSquareSelect, isAccessibleMode, moveFocusBy, resetSelection]
+    [handleAccessibleSquareSelect, isAccessibleMode, moveFocusBy, resetSelection, setLiveAnnouncement]
   );
 
   function onSquareClick(square) {
@@ -447,15 +446,7 @@ function ChessBoard() {
         {liveAnnouncement}
       </div>
 
-      {/*{isAccessibleMode && (*/}
-      {/*  <p className="accessible-board-instructions">*/}
-      {/*    Use Tab to leave the board. Use arrow keys to explore squares and*/}
-      {/*    press Enter or Space to pick up or drop a piece.*/}
-      {/*  </p>*/}
-      {/*)}*/}
-
       <div className="board-stack-container">
-
         <Chessboard
           id="ClickToMove"
           boardOrientation={playerColor}
@@ -467,7 +458,6 @@ function ChessBoard() {
           customBoardStyle={{
             borderRadius: "4px",
             boxShadow: "0 2px 10px rgba(0, 0, 0, 0.5)",
-            // Disable mouse clicks when the overlay is active
             pointerEvents: isAccessibleMode ? "none" : "auto",
           }}
           customSquareStyles={{

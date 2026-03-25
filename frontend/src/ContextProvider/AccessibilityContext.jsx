@@ -2,17 +2,28 @@ import { createContext, useCallback, useEffect, useMemo, useState } from "react"
 
 const AccessibilityContext = createContext({
   isAccessibleMode: false,
-  toggleAccessibleMode: () => {},
+  hasAnsweredPrompt: true, 
   setAccessibleMode: () => {},
+  toggleAccessibleMode: () => {},
+  dismissPrompt: () => {},
 });
 
 function AccessibilityContextProvider({ children }) {
   const [isAccessibleMode, setAccessibleModeState] = useState(false);
+  const [hasAnsweredPrompt, setHasAnsweredPrompt] = useState(true);
 
   useEffect(() => {
     const storedPreference = window.localStorage.getItem("accessibleMode");
-    if (storedPreference !== null) {
-      setAccessibleModeState(storedPreference === "true");
+    const prompted = window.localStorage.getItem("hasAnsweredPrompt");
+
+    // Check if they've ever answered the startup dialog
+    if (prompted === "true") {
+      setHasAnsweredPrompt(true);
+      if (storedPreference !== null) {
+        setAccessibleModeState(storedPreference === "true");
+      }
+    } else {
+      setHasAnsweredPrompt(false);
     }
   }, []);
 
@@ -29,13 +40,22 @@ function AccessibilityContextProvider({ children }) {
     });
   }, []);
 
+  // New function to handle the dialog answer
+  const dismissPrompt = useCallback((turnOn) => {
+    setHasAnsweredPrompt(true);
+    window.localStorage.setItem("hasAnsweredPrompt", "true");
+    setAccessibleMode(turnOn);
+  }, [setAccessibleMode]);
+
   const value = useMemo(
     () => ({
       isAccessibleMode,
+      hasAnsweredPrompt,
       setAccessibleMode,
       toggleAccessibleMode,
+      dismissPrompt,
     }),
-    [isAccessibleMode, setAccessibleMode, toggleAccessibleMode]
+    [isAccessibleMode, hasAnsweredPrompt, setAccessibleMode, toggleAccessibleMode, dismissPrompt]
   );
 
   return (

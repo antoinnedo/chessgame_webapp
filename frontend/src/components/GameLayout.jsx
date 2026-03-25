@@ -6,10 +6,13 @@ import { SocketContext } from '../ContextProvider/SocketContextProvider';
 import GameContainer from './GameContainer';
 import ControlBox from './ControlBox';
 import VoiceNavigation from './VoiceNavigation';
+import { useAnnouncement } from "../hooks/useAnnouncement";
+import AccessibilityPrompt from "../components/AccessibilityPrompt"
 
 export default function GameLayout() {
   const { game, playerMakeMove, playerMakeMoveEmit, gameStatus } = useContext(ChessContext);
   const { playerColor } = useContext(SocketContext);
+  useAnnouncement();
 
   const handleVoiceMove = useCallback((sanMove) => {
     const playerSide = playerColor === "white" ? "w" : "b";
@@ -63,8 +66,8 @@ export default function GameLayout() {
       <VoiceNavigation 
       isMyTurn={isMyTurn} 
       onMoveFound={handleVoiceMove} />
-      
       <div className="row">
+        <AccessibilityPrompt />
         <div className="col-lg-8 col-md-12 col-sm-12">
           <GameContainer />
         </div>

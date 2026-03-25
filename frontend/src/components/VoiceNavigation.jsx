@@ -1,27 +1,30 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useContext } from 'react';
 import { Fab, Tooltip, Fade } from '@mui/material';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import MicButton from './MicButton';
 import WebSpeech from '../services/WebSpeech.jsx';
 import ChessParser from '../services/ChessParser';
-import { speak } from '../services/TextToSpeech';
 import { useVoiceRecorder } from "../hooks/useVoiceRecorder.jsx";
 import { transcribeAudio } from '../api/ChessAPI.jsx';
+import { ChessContext } from '../ContextProvider/ChessContextProvider';
 
 export default function VoiceNavigation({ onMoveFound, isMyTurn }) {
+  // --- Context ---
+  const { setLiveAnnouncement } = useContext(ChessContext);
+
+  // --- State ---
   const [isNativeListening, setIsNativeListening] = useState(false);
   const [isNativeTalking, setIsNativeTalking] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [showTranscript, setShowTranscript] = useState(false);
-
-  const silenceTimerRef = useRef(null);
-  const speechRef = useRef(null);
-  const parserRef = useRef(new ChessParser());
-  const SILENCE_MS = 800;
-  const MIN_CONFIDENCE = 0.75;
   const [hasPermission, setHasPermission] = useState(false);
   const [useWhisper, setUseWhisper] = useState(false);
 
+  // --- Refs ---
+  const silenceTimerRef = useRef(null);
+  const speechRef = useRef(null);
+  const parserRef = useRef(new ChessParser());
+  
   const {
     isMonitoring,
     isRecording: isWhisperRecording,
@@ -31,7 +34,11 @@ export default function VoiceNavigation({ onMoveFound, isMyTurn }) {
     setAudioBlob,
   } = useVoiceRecorder();
 
-  // --- VISIBILITY TIMER (1 Second) ---
+  // --- Constants ---
+  const SILENCE_MS = 800;
+  const MIN_CONFIDENCE = 0.75;
+
+  // --- Visibility Timer ---
   useEffect(() => {
     if (transcript) {
       setShowTranscript(true);
@@ -40,12 +47,10 @@ export default function VoiceNavigation({ onMoveFound, isMyTurn }) {
     }
   }, [transcript]);
 
-  // --- STATE UNIFICATION ---
   const showMonitoring = isMonitoring || isNativeListening;
   const showRecording = isWhisperRecording || isNativeTalking;
 
   useEffect(() => {
-    console.log("Initializing SpeechToText...");
     speechRef.current = new WebSpeech(
       handleNativeTranscript,
       () => { setIsNativeListening(false); setIsNativeTalking(false); },
@@ -59,8 +64,6 @@ export default function VoiceNavigation({ onMoveFound, isMyTurn }) {
     if (confidence < MIN_CONFIDENCE) return;
 
     const candidate = parserRef.current.parse(raw);
-
-    // Ignore empty/short garbage (e.g. "e")
     if (!candidate || candidate.length < 2) return;
 
     const piece = candidate.charAt(0).toUpperCase();
@@ -69,21 +72,14 @@ export default function VoiceNavigation({ onMoveFound, isMyTurn }) {
 
     for (const san of candidates) {
       try {
-        // FIX 1: Restore the speak() calls!
         if (onMoveFound) {
           onMoveFound(san);
-          speak(`Heard: ${san}`);
-          return;
-        }
-        if (window.testMove) {
-          window.testMove(san);
-          speak(`Heard: ${san}`);
           return;
         }
       } catch (e) { }
     }
-    speak("Move unclear");
-  }, [onMoveFound]);
+    setLiveAnnouncement("Move unclear");
+  }, [onMoveFound, setLiveAnnouncement]);
 
   const handleNativeTranscript = useCallback((text, confidence) => {
     setTranscript(text);
@@ -93,7 +89,7 @@ export default function VoiceNavigation({ onMoveFound, isMyTurn }) {
     }, SILENCE_MS);
   }, [SILENCE_MS, trySubmit]);
 
-  // --- WHISPER PROCESSING ---
+  // --- Whisper Processing ---
   useEffect(() => {
     if (audioBlob) {
       if (!isMyTurn) {
@@ -106,92 +102,65 @@ export default function VoiceNavigation({ onMoveFound, isMyTurn }) {
           setTranscript(text);
           trySubmit(text, 1.0);
         } else {
-          speak("Could not understand");
+          setLiveAnnouncement("Could not understand");
         }
         setAudioBlob(null);
       };
       processAudio().catch(console.error);
     }
-  }, [audioBlob, trySubmit, setAudioBlob, isMyTurn]);
+  }, [audioBlob, trySubmit, setAudioBlob, isMyTurn, setLiveAnnouncement]);
 
-  // --- AUTO-STOP ---
-  useEffect(() => {
-    if (!isMyTurn) {
-      if (isNativeListening) {
-        speechRef.current?.stopListening();
-        setIsNativeListening(false);
-      }
-    }
-  }, [isMyTurn, isNativeListening]);
-
-  // --- NATIVE AUTO-START ---
+  // --- Native Auto-Start ---
   useEffect(() => {
     if (useWhisper) return;
     if (!speechRef.current?.supported || !hasPermission || !isMyTurn) return;
 
     speechRef.current.startListening();
     setIsNativeListening(true);
-    speak("Voice active.");
-  }, [isMyTurn, hasPermission, useWhisper]);
+    setLiveAnnouncement("Voice active.");
+  }, [isMyTurn, hasPermission, useWhisper, setLiveAnnouncement]);
 
   const handleMicClick = async () => {
     if (!isMyTurn) {
-      speak("Wait for your turn.");
+      setLiveAnnouncement("Wait for your turn.");
       return;
     }
 
-    // --- STOP LOGIC (The Fix) ---
-    // If EITHER Whisper state is active (Green OR Red), we must kill Whisper.
     if (isMonitoring || isWhisperRecording) {
-      console.log("Stopping Whisper (User Click)...");
-      stopMonitoring(); // This kills both monitoring and recording
+      stopMonitoring();
       return;
     }
 
-    // If Native is active, stop Native.
     if (isNativeListening || isNativeTalking) {
-      console.log("Stopping Native (User Click)...");
       speechRef.current?.stopListening();
       setIsNativeListening(false);
       setIsNativeTalking(false);
       return;
     }
 
-    // --- START LOGIC ---
     if (useWhisper) {
-      console.log("Starting Whisper Monitoring...");
       await startMonitoring();
     } else {
-      // Native Start Logic
       if (!hasPermission) {
         try {
           const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
           stream.getTracks().forEach(t => t.stop());
           setHasPermission(true);
         } catch (err) {
-          speak("Permission denied");
+          setLiveAnnouncement("Permission denied");
           return;
         }
       }
       speechRef.current.startListening();
       setIsNativeListening(true);
-      speak("Speak.");
+      setLiveAnnouncement("Speak.");
     }
-  };
-
-  const getWhisperTooltipText = () => useWhisper ? "Switch to Native" : "Switch to AI";
-  const getMicTooltipText = () => {
-    if (showRecording) return "Recording...";
-    if (showMonitoring) return "Stop Listening";
-    if (!isMyTurn) return "Wait for your turn";
-    return "Start Listening";
   };
 
   return (
     <>
-      {/* THE CONTROLS (Bottom Right) */}
       <div className="voice-navigation-container">
-        <Tooltip title={getWhisperTooltipText()} arrow placement="right">
+        <Tooltip title={useWhisper ? "Switch to Native" : "Switch to AI"} arrow placement="right">
           <Fab
             size="medium"
             onClick={() => {
@@ -212,7 +181,7 @@ export default function VoiceNavigation({ onMoveFound, isMyTurn }) {
           </Fab>
         </Tooltip>
 
-        <Tooltip title={getMicTooltipText()} arrow placement="right">
+        <Tooltip title={showRecording ? "Recording..." : showMonitoring ? "Stop Listening" : "Start Listening"} arrow placement="right">
           <div className={!isMyTurn ? "opacity-50 pointer-events-none grayscale" : ""}>
             <MicButton
               isMonitoring={showMonitoring}
@@ -223,8 +192,6 @@ export default function VoiceNavigation({ onMoveFound, isMyTurn }) {
         </Tooltip>
       </div>
 
-      {/* THE TRANSCRIPT (Fixed Center Overlay) */}
-      {/* FIX 2: Simplified classes and high z-index to ensure it shows */}
       <Fade in={showTranscript} timeout={1000}>
         <div
           className="fixed inset-0 flex items-center justify-center pointer-events-none"
