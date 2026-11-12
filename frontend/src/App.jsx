@@ -39,7 +39,7 @@ function App() {
           &copy; 2023 Copyright:{""}
           <b> Steve Do, Duong Vo</b>
           <br />
-          <h6>Accessibility added by Anthony</h6>
+          <h6>Accessibility added by Anthony, Thu Duong</h6>
           <h6>Find our code on Github! </h6>
           <a
             href="https://github.com/antoinnedo/chessgame_webapp"
