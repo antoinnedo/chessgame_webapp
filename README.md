@@ -2,6 +2,11 @@
 
 This project is a fork from [ChessLand](https://github.com/dominhnhut01/chessgame_webapp). 
 
+## Credits
+
+* **Original repository:** Steve Do and Duong Vo — [ChessLand](https://github.com/dominhnhut01/chessgame_webapp).
+* **Accessibility enhancements:** Anthony Do and Thu Duong.
+
 ## Mission
 
 The primary mission of this project is to create a fully accessible and hands-free chess experience. By combining rigorous accessibility standards with a highly accurate AI voice recognition system, this application ensures that visually impaired users or those requiring hands-free controls can seamlessly navigate and play the game.
